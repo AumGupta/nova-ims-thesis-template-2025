@@ -4,7 +4,9 @@
 % NOVA IMS thesis template (lean version)
 %
 % Compiler: pdfLaTeX (Overleaf default). XeLaTeX and LuaLaTeX also work.
-% Bibliography: BibTeX with apacite (APA author-year style).
+% Bibliography: apacite with BibTeX by default (APA author-year style).
+%       For full APA 7 (biblatex-apa with Biber, as in NOVAthesis) use
+%       \documentclass[apa7]{novaims-thesis}  (slower to compile)
 % Font: Arial/Helvetica 12 pt, as in the NOVA IMS template.
 %       For 12 pt Times use  \documentclass[times]{novaims-thesis}
 %
@@ -15,6 +17,7 @@
 \documentclass{novaims-thesis}
 
 \input{thesis-info}
+\addreferences{Bibliography/references}
 \input{Bibliography/key-aliases}
 
 \begin{document}
@@ -55,9 +58,10 @@
 \include{Chapters/6-conclusion}
 
 % ----- Declaration, references, appendices -----
-\include{BackMatter/genai-declaration}
+% Optional written declaration, switched in thesis-info.tex
+\makegenaideclaration{BackMatter/genai-declaration}
 
-\bibliography{Bibliography/references}
+\printreferences
 
 \clearpage
 \appendix

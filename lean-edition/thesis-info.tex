@@ -11,6 +11,7 @@
 \thesistitlecover{Title of the\\ Dissertation}
 
 \thesisauthor{Student Name}
+% Student number, printed on the title page under the name (leave empty to omit)
 \studentid{00000000}
 
 % Programme as it should read after "Master's degree in" on the title page.
@@ -41,12 +42,14 @@
 \sdgs{4,9}
 
 % Cover: a folder name in Figures/Covers (see the table in README.md).
+% MGT-2025-EN is a PROPOSAL pending institutional confirmation; the official
+% Geospatial Technologies cover is MGT-EN.
 \covercode{MDSAA-DS-EN}
 
 % Partner logos for joint programmes, shown on 2025-style covers.
 % Files without extension, relative to Figures/ (see Figures/Logos/README.txt).
 % \partnerlogos{Logos/partner-one,Logos/partner-two}
-% Geospatial Technologies (with \covercode{MGT-2025-EN}):
+% Geospatial Technologies, proposed 2025 cover (\covercode{MGT-2025-EN}, pending confirmation):
 % \partnerlogos{Logos/uji,Logos/uni-muenster,Logos/erasmus-plus}
 % \partnerlogoscale{Logos/uji}{0.8}
 
@@ -55,3 +58,8 @@
 \genaiusepage{true}
 %   Dedication (FrontMatter/dedication.tex)
 \dedicationpage{true}
+%   Written "Declaration of Generative AI Use" chapter after the conclusion
+%   (BackMatter/genai-declaration.tex). Off by default, because the table above
+%   already records the use of generative AI. Switch it on only if your
+%   programme asks for a written declaration as well.
+\genaideclarationpage{false}

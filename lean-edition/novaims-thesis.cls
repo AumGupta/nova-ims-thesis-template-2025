@@ -19,14 +19,19 @@
 %% Options
 %%   arial  (default) body text in Arial / Helvetica, as set in the NOVA IMS template
 %%   times            body text in Times, 12 pt
+%%   apa7             references with biblatex-apa and Biber (full APA 7, as in
+%%                    the NOVAthesis template); default is apacite with BibTeX,
+%%                    which compiles faster but follows APA 6 in some details
 %% =====================================================================
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{novaims-thesis}[2026/11/16 v1.0 NOVA IMS thesis class (Geospatial Technologies)]
+\ProvidesClass{novaims-thesis}[2026/11/22 v1.1 NOVA IMS thesis class, lean edition]
 
 \newcommand*{\nims@font}{arial}
 \newcommand*{\nims@arial}{arial}
 \DeclareOption{arial}{\renewcommand*{\nims@font}{arial}}
 \DeclareOption{times}{\renewcommand*{\nims@font}{times}}
+\newif\ifnims@apaseven
+\DeclareOption{apa7}{\nims@apaseventrue}
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{memoir}}
 \ProcessOptions\relax
 
@@ -69,7 +74,12 @@
 \RequirePackage{eso-pic}
 \RequirePackage[portuguese,main=english,shorthands=off]{babel}
 \RequirePackage{etoolbox}
-\RequirePackage[natbibapa]{apacite}              % APA author-year references with BibTeX
+\ifnims@apaseven
+  \RequirePackage{csquotes}
+  \RequirePackage[backend=biber,style=apa,natbib=true]{biblatex}  % APA 7 with Biber
+\else
+  \RequirePackage[natbibapa]{apacite}            % APA author-year references with BibTeX
+\fi
 \RequirePackage{xurl}
 \RequirePackage[colorlinks=true,allcolors=nimslink,bookmarksnumbered=true]{hyperref}
 
@@ -79,9 +89,21 @@
 \urlstyle{same}
 
 %% ---------------------------------------------------------------------
-%% References: APA style (apacite), DOIs printed as links
+%% References
+%%   default: apacite with BibTeX (fast), DOIs printed as links
+%%   option apa7: biblatex-apa with Biber (full APA 7)
+%% In main.tex: \addreferences{Bibliography/references} in the preamble
+%% (file name without .bib) and \printreferences where the list goes.
 %% ---------------------------------------------------------------------
-\bibliographystyle{apacite}
+\newcommand*{\nims@bibfile}{}
+\ifnims@apaseven
+  \newcommand{\addreferences}[1]{\addbibresource{#1.bib}}
+  \newcommand{\printreferences}{\printbibliography[heading=bibintoc,title={References}]}
+\else
+  \bibliographystyle{apacite}
+  \newcommand{\addreferences}[1]{\renewcommand*{\nims@bibfile}{#1}}
+  \newcommand{\printreferences}{\bibliography{\nims@bibfile}}
+\fi
 \addto\captionsenglish{%
   \renewcommand{\bibname}{References}%
   \renewcommand{\contentsname}{Index}%
@@ -90,20 +112,24 @@
 \newcommand{\nims@doi}[1]{\begingroup\urlstyle{same}%
   \href{https://doi.org/#1}{\nolinkurl{https://doi.org/#1}}\endgroup}
 \newcommand{\nims@bibsize}{\normalsize\raggedright}
-\AtBeginDocument{%
-  \renewcommand{\doiprefix}{}%
-  \let\doi\nims@doi
-  \let\bibliographytypesize\nims@bibsize
-  \urlstyle{same}%
-}
-% APA 7: "et al." from the first citation for three or more authors
-\NAT@longnamesfalse
+\ifnims@apaseven\else
+  \AtBeginDocument{%
+    \renewcommand{\doiprefix}{}%
+    \let\doi\nims@doi
+    \let\bibliographytypesize\nims@bibsize
+    \urlstyle{same}%
+  }
+  % APA 7 rule: "et al." from the first citation for three or more authors
+  \NAT@longnamesfalse
+\fi
 
 % Citation key aliases: \citekeyalias{old-key}{key-in-bib-file}
 % lets an old key (for example from the proposal) point to one entry.
 \newcommand{\citekeyalias}[2]{\@namedef{nims@alias@#1}{#2}}
 % The citation commands are wrapped so that every key is looked up in the
-% alias table before it reaches natbib (no patching of package internals).
+% alias table before it reaches natbib or biblatex (no patching of package
+% internals). With the apa7 option the biblatex commands \textcite and
+% \parencite are wrapped too.
 \newcommand{\nims@mapkeys}[1]{%
   \def\nims@keys{}%
   \@for\nims@k:=#1\do{%
@@ -124,6 +150,10 @@
 \AtBeginDocument{%
   \@for\nims@c:=cite,citet,citep,citealt,citealp,citeauthor,citeyear,citeyearpar\do{%
     \expandafter\nims@wrapcite\expandafter{\nims@c}}%
+  \ifnims@apaseven
+    \@for\nims@c:=textcite,parencite,Textcite,Parencite\do{%
+      \expandafter\nims@wrapcite\expandafter{\nims@c}}%
+  \fi
 }
 
 % memoir already provides booktabs, array and tabularx.
@@ -264,8 +294,12 @@
 % Optional front matter pages: \genaiusepage{true|false}, \dedicationpage{true|false}
 \newif\ifnims@genaiuse  \nims@genaiusetrue
 \newif\ifnims@dedication\nims@dedicationtrue
+\newif\ifnims@genaidecl \nims@genaideclfalse
 \newcommand{\genaiusepage}[1]{\csname nims@genaiuse#1\endcsname}
 \newcommand{\dedicationpage}[1]{\csname nims@dedication#1\endcsname}
+% Written "Declaration of Generative AI Use" chapter after the conclusion,
+% independent of the front matter table: \genaideclarationpage{true|false}
+\newcommand{\genaideclarationpage}[1]{\csname nims@genaidecl#1\endcsname}
 
 % Text versions for use in the document
 \newcommand*{\printthesistitle}{\nims@title}
@@ -287,6 +321,7 @@
 \newcommand*{\nims@isgtnew}{\ifdefstring{\nims@covercode}{MGT-2025-EN}}
 
 % Degree wording (official NOVA IMS strings)
+\newcommand*{\nims@worknoun}{\ifdefstring{\nims@degree}{phd}{thesis}{dissertation}}
 \newcommand*{\nims@doctype}{\ifdefstring{\nims@degree}{phd}{Doctoral thesis}{Dissertation}}
 \newcommand*{\nims@degreename}{\ifdefstring{\nims@degree}{phd}{Doctor}{Master's}}
 
@@ -403,7 +438,10 @@
   \vspace{0.5cm plus 1fill}
   {\fontsize{16.5}{21}\selectfont\bfseries\MakeUppercase{\nims@covertitle}\par}
   \vspace{1.1cm}
-  {\fontsize{12}{15}\selectfont by\par\vspace{0.3cm}\fontsize{13}{16}\selectfont\nims@author\par}
+  {\fontsize{12}{15}\selectfont by\par\vspace{0.3cm}\fontsize{13}{16}\selectfont\nims@author\par
+   \ifx\nims@studentid\@empty\else
+     \vspace{0.15cm}\fontsize{11}{14}\selectfont Student number \nims@studentid\par
+   \fi}
   \vspace{1.1cm}
   {\fontsize{11.5}{15}\selectfont\nims@titlestatement\par}
   \vspace{0.5cm plus 1fill}
@@ -454,7 +492,7 @@
   Copyright \textcopyright\ \nims@author, NOVA Information Management School, NOVA University Lisbon.\par
   \smallskip
   The NOVA Information Management School and the NOVA University Lisbon have the right,
-  perpetual and without geographical boundaries, to file and publish this dissertation
+  perpetual and without geographical boundaries, to file and publish this \nims@worknoun{}
   through printed copies reproduced on paper or on digital form, or by any other means
   known or that may be invented, and to disseminate through scientific repositories and
   admit its copying and distribution for non-commercial, educational or research purposes,
@@ -491,6 +529,7 @@
 
 % Optional pages, switched in thesis-info.tex
 \newcommand{\makegenaiusepage}[1]{\ifnims@genaiuse\input{#1}\fi}
+\newcommand{\makegenaideclaration}[1]{\ifnims@genaidecl\clearpage\input{#1}\clearpage\fi}
 \newcommand{\makededication}[1]{%
   \ifnims@dedication
     \clearpage\thispagestyle{plain}\pdfbookmark[0]{Dedication}{dedication}%

@@ -9,4 +9,7 @@
 *.fls
 *.fdb_latexmk
 *.synctex.gz
-/main.pdf
+/lean-edition/main.pdf
+*.bcf
+*.run.xml
+/lean-edition/benchmark/runs/
